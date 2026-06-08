@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Reminders — Contactify{% endblock %}
+
+{% block content %}
+
+<!-- Top Navbar -->
+<nav class="glass sticky top-0 z-40 border-b border-white/50 shadow-sm">
+  <div class="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="flex items-center justify-center w-9 h-9 rounded-xl shadow overflow-hidden"
+           style="background: white;">
+        <img src="{% static 'images/logo.jpg' %}" alt="Contactify Logo" class="w-full h-full object-cover">
+      </div>
+      <span class="font-serif text-xl text-slate-800">Contactify</span>
+    </div>
+    <a href="{% url 'dashboard' %}"
+       class="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors font-medium">
+      <i class="ph ph-arrow-left"></i> Back to Contacts
+    </a>
+  </div>
+</nav>
+
+<!-- Main Content -->
+<main class="max-w-5xl mx-auto px-6 py-10">
+
+  <!-- Page Header -->
+  <div class="mb-8 animate-fade-up text-center">
+    <div class="flex items-center justify-center gap-3 mb-2">
+      <div class="w-12 h-12 rounded-xl flex items-center justify-center shadow"
+           style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+        <i class="ph-fill ph-bell text-white text-2xl"></i>
+      </div>
+      <h1 class="font-serif text-3xl text-slate-800">Your Reminders</h1>
+    </div>
+    <p class="text-slate-500 text-sm">
+      {% if total > 0 %}
+        You have {{ total }} reminder{{ total|pluralize }} set
+      {% else %}
+        No reminders set yet
+      {% endif %}
+    </p>
+  </div>
+
+  <!-- Today's Reminders -->
+  {% if today %}
+  <div class="mb-8 animate-fade-up" style="animation-delay:0.1s;">
+    <h2 class="font-serif text-xl text-slate-800 mb-4 flex items-center gap-2">
+      <i class="ph-fill ph-calendar-check text-blue-500"></i> Today
+    </h2>
+    <div class="space-y-3">
+      {% for contact in today %}
+      <div class="glass rounded-2xl p-5 shadow-md border-2 border-blue-200 hover:shadow-lg transition-shadow">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            {% if contact.image %}
+              <img src="{{ contact.image.url }}" alt="{{ contact.name }}"
+                   class="w-12 h-12 rounded-xl object-cover shadow" />
+            {% else %}
+              <div class="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold shadow"
+                   style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+                {{ contact.get_initials }}
+              </div>
+            {% endif %}
+            <div>
+              <h3 class="font-semibold text-slate-800">{{ contact.name }}</h3>
+              <p class="text-sm text-slate-500">{{ contact.phone }}</p>
+            </div>
+          </div>
+          <div class="text-right">
+            <p class="text-sm font-medium text-blue-600">{{ contact.reminder_date|date:"g:i A" }}</p>
+            {% if contact.reminder_note %}
+            <p class="text-xs text-slate-500 mt-1">{{ contact.reminder_note }}</p>
+            {% endif %}
+            <a href="{% url 'edit_contact' contact.pk %}"
+               class="text-xs text-slate-400 hover:text-blue-600 mt-2 inline-block">
+              <i class="ph ph-pencil-simple"></i> Edit
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Upcoming Reminders -->
+  {% if upcoming %}
+  <div class="mb-8 animate-fade-up" style="animation-delay:0.15s;">
+    <h2 class="font-serif text-xl text-slate-800 mb-4 flex items-center gap-2">
+      <i class="ph ph-calendar text-green-500"></i> Upcoming
+    </h2>
+    <div class="space-y-3">
+      {% for contact in upcoming %}
+      <div class="glass rounded-2xl p-5 shadow-md hover:shadow-lg transition-shadow">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            {% if contact.image %}
+              <img src="{{ contact.image.url }}" alt="{{ contact.name }}"
+                   class="w-12 h-12 rounded-xl object-cover shadow" />
+            {% else %}
+              <div class="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold shadow"
+                   style="background: linear-gradient(135deg,
+                     hsl({{ contact.pk|add:200 }}, 60%, 45%),
+                     hsl({{ contact.pk|add:230 }}, 60%, 35%));">
+                {{ contact.get_initials }}
+              </div>
+            {% endif %}
+            <div>
+              <h3 class="font-semibold text-slate-800">{{ contact.name }}</h3>
+              <p class="text-sm text-slate-500">{{ contact.phone }}</p>
+            </div>
+          </div>
+          <div class="text-right">
+            <p class="text-sm font-medium text-slate-700">{{ contact.reminder_date|date:"M d, Y" }}</p>
+            <p class="text-xs text-slate-500">{{ contact.reminder_date|date:"g:i A" }}</p>
+            {% if contact.reminder_note %}
+            <p class="text-xs text-slate-500 mt-1 italic">{{ contact.reminder_note }}</p>
+            {% endif %}
+            <a href="{% url 'edit_contact' contact.pk %}"
+               class="text-xs text-slate-400 hover:text-blue-600 mt-2 inline-block">
+              <i class="ph ph-pencil-simple"></i> Edit
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Past Reminders -->
+  {% if past %}
+  <div class="mb-8 animate-fade-up" style="animation-delay:0.2s;">
+    <h2 class="font-serif text-xl text-slate-800 mb-4 flex items-center gap-2">
+      <i class="ph ph-clock-counter-clockwise text-slate-400"></i> Past
+    </h2>
+    <div class="space-y-3">
+      {% for contact in past %}
+      <div class="glass rounded-2xl p-5 shadow-md opacity-70 hover:opacity-100 transition-opacity">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            {% if contact.image %}
+              <img src="{{ contact.image.url }}" alt="{{ contact.name }}"
+                   class="w-12 h-12 rounded-xl object-cover shadow grayscale" />
+            {% else %}
+              <div class="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold shadow"
+                   style="background: linear-gradient(135deg, #94a3b8, #64748b);">
+                {{ contact.get_initials }}
+              </div>
+            {% endif %}
+            <div>
+              <h3 class="font-semibold text-slate-700">{{ contact.name }}</h3>
+              <p class="text-sm text-slate-400">{{ contact.phone }}</p>
+            </div>
+          </div>
+          <div class="text-right">
+            <p class="text-sm font-medium text-slate-500 line-through">{{ contact.reminder_date|date:"M d, Y g:i A" }}</p>
+            {% if contact.reminder_note %}
+            <p class="text-xs text-slate-400 mt-1 italic">{{ contact.reminder_note }}</p>
+            {% endif %}
+            <a href="{% url 'edit_contact' contact.pk %}"
+               class="text-xs text-slate-400 hover:text-blue-600 mt-2 inline-block">
+              <i class="ph ph-pencil-simple"></i> Update
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Empty State -->
+  {% if not today and not upcoming and not past %}
+  <div class="flex flex-col items-center justify-center py-24 animate-fade-up text-center">
+    <div class="w-24 h-24 rounded-3xl flex items-center justify-center mb-6 shadow-lg"
+         style="background: linear-gradient(135deg, #dbeafe, #bfdbfe);">
+      <i class="ph ph-bell-slash text-5xl text-blue-600"></i>
+    </div>
+    <h2 class="font-serif text-2xl text-slate-700 mb-2">No reminders yet</h2>
+    <p class="text-slate-500 text-sm mb-6">Add reminders to your contacts to get notified about important dates.</p>
+    <a href="{% url 'dashboard' %}" class="btn-primary">
+      <i class="ph ph-arrow-left"></i> Go to Contacts
+    </a>
+  </div>
+  {% endif %}
+
+</main>
+
+{% endblock %}

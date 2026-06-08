@@ -1,0 +1,297 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}AI Assistant — Contactify{% endblock %}
+
+{% block content %}
+
+<style>
+  .chat-message {
+    animation: slideIn 0.3s ease-out;
+  }
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .typing-indicator span {
+    animation: blink 1.4s infinite;
+  }
+  .typing-indicator span:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+  .typing-indicator span:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+  @keyframes blink {
+    0%, 60%, 100% { opacity: 0.3; }
+    30% { opacity: 1; }
+  }
+</style>
+
+<!-- Top Navbar -->
+<nav class="glass sticky top-0 z-40 border-b border-white/50 shadow-sm">
+  <div class="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="flex items-center justify-center w-9 h-9 rounded-xl shadow overflow-hidden"
+           style="background: white;">
+        <img src="{% static 'images/logo.jpg' %}" alt="Contactify Logo" class="w-full h-full object-cover">
+      </div>
+      <span class="font-serif text-xl text-slate-800">Contactify AI Assistant</span>
+    </div>
+    <a href="{% url 'dashboard' %}"
+       class="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors font-medium">
+      <i class="ph ph-arrow-left"></i> Back to Dashboard
+    </a>
+  </div>
+</nav>
+
+<!-- Main Chat Container -->
+<main class="max-w-4xl mx-auto px-6 py-6 h-[calc(100vh-120px)] flex flex-col">
+
+  <!-- Chat Header -->
+  <div class="glass rounded-2xl p-4 mb-4 animate-fade-up">
+    <div class="flex items-center gap-4">
+      <div class="w-14 h-14 rounded-xl flex items-center justify-center shadow-lg"
+           style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+        <i class="ph-fill ph-robot text-white text-3xl"></i>
+      </div>
+      <div class="flex-1">
+        <h2 class="font-bold text-slate-800 text-lg">AI Assistant</h2>
+        <p class="text-sm text-slate-500">Ask me anything about your contacts!</p>
+      </div>
+      <div class="text-right text-xs text-slate-400">
+        <div>{{ total_contacts }} Contacts</div>
+        <div>{{ emergency_contacts }} Emergency</div>
+        <div>{{ reminders }} Reminders</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chat Messages Area -->
+  <div id="chatMessages" class="flex-1 overflow-y-auto mb-4 space-y-4 px-2">
+    
+    <!-- Welcome Message -->
+    <div class="chat-message flex items-start gap-3">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center shadow flex-shrink-0"
+           style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+        <i class="ph-fill ph-robot text-white text-xl"></i>
+      </div>
+      <div class="flex-1">
+        <div class="glass rounded-2xl rounded-tl-none p-4 max-w-2xl">
+          <p class="text-slate-700 leading-relaxed">
+            👋 <strong>Hello {{ request.user.username }}!</strong><br><br>
+            I'm your Contactify AI Assistant. I can help you:
+          </p>
+          <ul class="mt-2 space-y-1 text-sm text-slate-600">
+            <li>🔍 Search and find contacts</li>
+            <li>📊 View statistics and insights</li>
+            <li>🚨 Manage emergency contacts</li>
+            <li>🔔 Check reminders</li>
+            <li>❓ Answer questions about features</li>
+          </ul>
+          <p class="mt-3 text-sm text-slate-500">
+            Just type your question below or click a suggestion!
+          </p>
+        </div>
+        <div class="mt-2 flex gap-2 flex-wrap" id="initialSuggestions">
+          <button onclick="sendSuggestion('How many contacts do I have?')" 
+                  class="px-3 py-1.5 text-xs rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors">
+            📊 Show statistics
+          </button>
+          <button onclick="sendSuggestion('Show emergency contacts')" 
+                  class="px-3 py-1.5 text-xs rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors">
+            🚨 Emergency contacts
+          </button>
+          <button onclick="sendSuggestion('View my reminders')" 
+                  class="px-3 py-1.5 text-xs rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition-colors">
+            🔔 Reminders
+          </button>
+          <button onclick="sendSuggestion('Help')" 
+                  class="px-3 py-1.5 text-xs rounded-lg bg-purple-50 text-purple-600 hover:bg-purple-100 transition-colors">
+            ❓ Help
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Chat Input Area -->
+  <div class="glass rounded-2xl p-4">
+    <form id="chatForm" class="flex gap-3">
+      <input type="text" 
+             id="userInput" 
+             placeholder="Ask me anything... (e.g., 'Find John' or 'How many contacts?')"
+             class="flex-1 px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+             autocomplete="off">
+      <button type="submit" 
+              class="px-6 py-3 rounded-xl font-medium transition-all"
+              style="background: linear-gradient(135deg, #3b82f6, #2563eb); color: white;"
+              id="sendButton">
+        <i class="ph ph-paper-plane-tilt text-lg"></i>
+      </button>
+    </form>
+    <div class="mt-2 text-xs text-slate-400 text-center">
+      💡 Tip: Try "Find [name]", "Show stats", or "Help" for available commands
+    </div>
+  </div>
+
+</main>
+
+<script>
+const chatMessages = document.getElementById('chatMessages');
+const chatForm = document.getElementById('chatForm');
+const userInput = document.getElementById('userInput');
+const sendButton = document.getElementById('sendButton');
+
+// Auto-scroll to bottom
+function scrollToBottom() {
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// Add user message to chat
+function addUserMessage(message) {
+  const messageDiv = document.createElement('div');
+  messageDiv.className = 'chat-message flex items-start gap-3 justify-end';
+  messageDiv.innerHTML = `
+    <div class="flex-1 flex justify-end">
+      <div class="bg-blue-600 text-white rounded-2xl rounded-tr-none p-4 max-w-2xl">
+        <p class="leading-relaxed">${escapeHtml(message)}</p>
+      </div>
+    </div>
+    <div class="w-10 h-10 rounded-xl flex items-center justify-center shadow flex-shrink-0"
+         style="background: linear-gradient(135deg, #3d5a99, #2d4a89);">
+      <i class="ph ph-user text-white text-xl"></i>
+    </div>
+  `;
+  chatMessages.appendChild(messageDiv);
+  scrollToBottom();
+}
+
+// Add bot message to chat
+function addBotMessage(message, suggestions = []) {
+  // Remove typing indicator
+  const typingIndicator = document.getElementById('typingIndicator');
+  if (typingIndicator) typingIndicator.remove();
+  
+  const messageDiv = document.createElement('div');
+  messageDiv.className = 'chat-message flex items-start gap-3';
+  
+  // Convert markdown-style bold to HTML
+  const formattedMessage = message
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>');
+  
+  messageDiv.innerHTML = `
+    <div class="w-10 h-10 rounded-xl flex items-center justify-center shadow flex-shrink-0"
+         style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+      <i class="ph-fill ph-robot text-white text-xl"></i>
+    </div>
+    <div class="flex-1">
+      <div class="glass rounded-2xl rounded-tl-none p-4 max-w-2xl">
+        <p class="text-slate-700 leading-relaxed">${formattedMessage}</p>
+      </div>
+      ${suggestions.length > 0 ? `
+        <div class="mt-2 flex gap-2 flex-wrap">
+          ${suggestions.map(s => `
+            <button onclick="sendSuggestion('${escapeHtml(s)}')" 
+                    class="px-3 py-1.5 text-xs rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">
+              ${escapeHtml(s)}
+            </button>
+          `).join('')}
+        </div>
+      ` : ''}
+    </div>
+  `;
+  chatMessages.appendChild(messageDiv);
+  scrollToBottom();
+}
+
+// Show typing indicator
+function showTyping() {
+  const typingDiv = document.createElement('div');
+  typingDiv.id = 'typingIndicator';
+  typingDiv.className = 'chat-message flex items-start gap-3';
+  typingDiv.innerHTML = `
+    <div class="w-10 h-10 rounded-xl flex items-center justify-center shadow flex-shrink-0"
+         style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+      <i class="ph-fill ph-robot text-white text-xl"></i>
+    </div>
+    <div class="glass rounded-2xl rounded-tl-none p-4">
+      <div class="typing-indicator flex gap-1">
+        <span class="w-2 h-2 bg-slate-400 rounded-full"></span>
+        <span class="w-2 h-2 bg-slate-400 rounded-full"></span>
+        <span class="w-2 h-2 bg-slate-400 rounded-full"></span>
+      </div>
+    </div>
+  `;
+  chatMessages.appendChild(typingDiv);
+  scrollToBottom();
+}
+
+// Send message to chatbot API
+async function sendMessage(message) {
+  if (!message.trim()) return;
+  
+  // Add user message
+  addUserMessage(message);
+  userInput.value = '';
+  
+  // Show typing
+  showTyping();
+  
+  try {
+    const response = await fetch('/api/chatbot/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}'
+      },
+      body: JSON.stringify({ message: message })
+    });
+    
+    const data = await response.json();
+    
+    // Add bot response
+    setTimeout(() => {
+      addBotMessage(data.response, data.suggestions || []);
+    }, 500);
+    
+  } catch (error) {
+    setTimeout(() => {
+      addBotMessage('❌ Sorry, I encountered an error. Please try again!', ['Help', 'Show dashboard']);
+    }, 500);
+  }
+}
+
+// Send suggestion
+function sendSuggestion(text) {
+  sendMessage(text);
+}
+
+// Handle form submission
+chatForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const message = userInput.value.trim();
+  if (message) {
+    sendMessage(message);
+  }
+});
+
+// Escape HTML
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// Focus input on load
+userInput.focus();
+</script>
+
+{% endblock %}

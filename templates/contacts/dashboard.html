@@ -1,0 +1,904 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}My Contacts — Contactify{% endblock %}
+
+{% block content %}
+
+<!-- Top Navbar -->
+<nav class="glass sticky top-0 z-40 border-b border-white/50 shadow-sm">
+  <div class="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+    <!-- Brand -->
+    <div class="flex items-center gap-3">
+      <div class="flex items-center justify-center w-9 h-9 rounded-xl shadow overflow-hidden"
+           style="background: white;">
+        <img src="{% static 'images/logo.jpg' %}" alt="Contactify Logo" class="w-full h-full object-cover">
+      </div>
+      <span class="font-serif text-xl text-slate-800">Contactify</span>
+    </div>
+
+    <!-- User info + Logout -->
+    <div class="flex items-center gap-3">
+      <a href="{% url 'stats' %}"
+         class="hidden sm:flex items-center gap-1.5 text-sm text-slate-600 hover:text-purple-600 transition-colors font-medium px-3 py-1.5 rounded-full hover:bg-purple-50">
+        <i class="ph-fill ph-chart-bar"></i> Stats
+      </a>
+      <a href="{% url 'chatbot' %}"
+         class="hidden sm:flex items-center gap-1.5 text-sm text-slate-600 hover:text-blue-600 transition-colors font-medium px-3 py-1.5 rounded-full hover:bg-blue-50">
+        <i class="ph-fill ph-robot"></i> AI Assistant
+      </a>
+      <a href="{% url 'reminders' %}"
+         class="hidden sm:flex items-center gap-1.5 text-sm text-slate-600 hover:text-blue-600 transition-colors font-medium px-3 py-1.5 rounded-full hover:bg-blue-50">
+        <i class="ph-fill ph-bell"></i> Reminders
+      </a>
+      <div class="hidden sm:flex items-center gap-2 bg-white/60 rounded-full px-3 py-1.5 border border-slate-200">
+        <div class="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold"
+             style="background: linear-gradient(135deg, #3d5a99, #2d4a89);">
+          {{ request.user.username|first|upper }}
+        </div>
+        <span class="text-sm text-slate-700 font-medium">{{ request.user.username }}</span>
+      </div>
+      <a href="{% url 'logout' %}"
+         class="flex items-center gap-1.5 text-sm text-slate-500 hover:text-red-500 transition-colors font-medium px-3 py-1.5 rounded-full hover:bg-red-50">
+        <i class="ph ph-sign-out"></i> <span class="hidden sm:inline">Logout</span>
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- Main Content -->
+<main class="max-w-7xl mx-auto px-6 py-8">
+
+  <!-- Header row -->
+  <div class="flex flex-col items-center text-center gap-4 mb-12 mt-8">
+    <!-- Main Heading -->
+    <div class="animate-fade-up" style="animation-delay:0.1s;">
+      <h1 class="font-serif text-5xl sm:text-6xl text-slate-900 leading-tight">
+        Your contacts,<br>
+        <span style="color: #3d5a99;">beautifully organized</span>
+      </h1>
+    </div>
+    
+    <!-- Description -->
+    <p class="animate-fade-up text-slate-600 text-lg max-w-2xl leading-relaxed" style="animation-delay:0.15s;">
+      Contactify is a clean, private directory for all your contacts — with fast search, photo support, and everything in one place.
+    </p>
+    
+    <!-- Add Contact Button -->
+    <div class="animate-fade-up mt-2" style="animation-delay:0.2s;">
+      <a href="{% url 'add_contact' %}" class="btn-primary text-lg px-8 py-3">
+        <i class="ph ph-plus"></i> Add Contact
+      </a>
+    </div>
+    
+    <!-- Contact Count -->
+    <p class="text-slate-500 text-sm mt-2">
+      {% if query %}
+        {{ emergency_contacts|length|add:favorites|length|add:regular_contacts|length }} result{{ emergency_contacts|length|add:favorites|length|add:regular_contacts|length|pluralize }} for "<strong>{{ query }}</strong>"
+      {% else %}
+        {{ total }} contact{{ total|pluralize }} in your directory
+      {% endif %}
+    </p>
+  </div>
+
+  <!-- Search Bar -->
+  <form method="get" class="mb-6 animate-fade-up" style="animation-delay:0.15s;">
+    <div class="relative max-w-xl flex gap-2">
+      <div class="relative flex-1">
+        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+          <i class="ph ph-magnifying-glass text-lg"></i>
+        </span>
+        <input type="text" name="q" value="{{ query }}" id="searchInput"
+               placeholder="Search by name, phone, email, or address…"
+               class="form-input pl-11 pr-4 py-3 rounded-2xl shadow-sm bg-white w-full" />
+        <!-- Preserve category filter in search -->
+        {% if category_filter %}
+        <input type="hidden" name="category" value="{{ category_filter }}" />
+        {% endif %}
+      </div>
+      <button type="submit" class="btn-primary px-6 py-3 rounded-2xl whitespace-nowrap">
+        Search
+      </button>
+      {% if query or category_filter %}
+      <a href="{% url 'dashboard' %}"
+         class="btn-secondary px-6 py-3 rounded-2xl whitespace-nowrap">
+        Clear
+      </a>
+      {% endif %}
+    </div>
+  </form>
+
+  <!-- Category Filter Pills -->
+  {% if all_categories %}
+  <div class="mb-8 animate-fade-up" style="animation-delay:0.2s;">
+    <div class="flex items-center gap-2 flex-wrap">
+      <span class="text-sm font-medium text-slate-600">Filter:</span>
+      <a href="{% url 'dashboard' %}{% if query %}?q={{ query }}{% endif %}"
+         class="px-4 py-2 rounded-full text-sm font-medium transition-all {% if not category_filter %}bg-navy-600 text-white{% else %}bg-white text-slate-600 hover:bg-slate-50 border border-slate-200{% endif %}">
+        All
+      </a>
+      {% for cat in all_categories %}
+      <a href="?category={{ cat|urlencode }}{% if query %}&q={{ query }}{% endif %}"
+         class="px-4 py-2 rounded-full text-sm font-medium transition-all {% if category_filter == cat %}bg-navy-600 text-white{% else %}bg-white text-slate-600 hover:bg-slate-50 border border-slate-200{% endif %}">
+        {{ cat }}
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Contact Cards Grid -->
+  {% if emergency_contacts or favorites or regular_contacts %}
+  
+  <!-- Emergency Contacts Section -->
+  {% if emergency_contacts %}
+  <div class="mb-10">
+    <h2 class="font-serif text-xl text-slate-800 mb-4 flex items-center gap-2">
+      <i class="ph-fill ph-siren text-red-500"></i> Emergency Contacts
+    </h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+      {% for contact in emergency_contacts %}
+      <div class="contact-card glass rounded-2xl p-5 shadow-md animate-fade-up border-2 border-red-200">
+
+        <!-- Emergency Badge -->
+        <div class="mb-3">
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 border border-red-300">
+            <i class="ph-fill ph-siren text-xs"></i>
+            EMERGENCY
+          </span>
+        </div>
+
+        <!-- Avatar + Actions -->
+        <div class="flex items-start justify-between mb-4">
+          <div>
+            {% if contact.image %}
+              <img src="{{ contact.image.url }}" alt="{{ contact.name }}"
+                   class="w-14 h-14 rounded-2xl object-cover shadow-md" />
+            {% else %}
+              <!-- Colored initials avatar -->
+              <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-md"
+                   style="background: linear-gradient(135deg, #dc2626, #b91c1c);">
+                {{ contact.get_initials }}
+              </div>
+            {% endif %}
+          </div>
+
+          <!-- Star / Edit / Delete buttons -->
+          <div class="flex gap-1.5">
+            {% if contact.is_favorite %}
+            <a href="{% url 'toggle_favorite' contact.pk %}"
+               class="w-8 h-8 flex items-center justify-center rounded-xl bg-yellow-100 hover:bg-yellow-200 text-yellow-600 transition-all hover:scale-110"
+               title="Remove from favorites">
+              <i class="ph-fill ph-star text-sm"></i>
+            </a>
+            {% else %}
+            <a href="{% url 'toggle_favorite' contact.pk %}"
+               class="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-yellow-100 text-slate-400 hover:text-yellow-500 transition-all hover:scale-110"
+               title="Add to favorites">
+              <i class="ph ph-star text-sm"></i>
+            </a>
+            {% endif %}
+            <div class="relative group">
+              <button class="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-green-100 text-slate-500 hover:text-green-600 transition-all hover:scale-110"
+                      title="Download contact">
+                <i class="ph ph-download-simple text-sm"></i>
+              </button>
+              <!-- Download dropdown -->
+              <div class="absolute right-0 mt-1 w-40 bg-white rounded-xl shadow-lg border border-slate-200 hidden group-hover:block z-10">
+                <a href="{% url 'export_single_vcard' contact.pk %}" 
+                   class="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 text-sm text-slate-700 rounded-t-xl">
+                  <i class="ph ph-address-book text-green-600"></i>
+                  <span>vCard (.vcf)</span>
+                </a>
+                <a href="{% url 'export_single_csv' contact.pk %}"
+                   class="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 text-sm text-slate-700 rounded-b-xl">
+                  <i class="ph ph-file-csv text-blue-600"></i>
+                  <span>CSV (.csv)</span>
+                </a>
+              </div>
+            </div>
+            <a href="{% url 'edit_contact' contact.pk %}"
+               class="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-navy-100 text-slate-500 hover:text-navy-600 transition-all hover:scale-110"
+               style="--tw-bg-opacity:1;"
+               title="Edit">
+              <i class="ph ph-pencil-simple text-sm"></i>
+            </a>
+            <button onclick="confirmDelete('{{ contact.name }}', '{% url 'delete_contact' contact.pk %}')"
+                    class="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-red-100 text-slate-500 hover:text-red-500 transition-all hover:scale-110"
+                    title="Delete">
+              <i class="ph ph-trash text-sm"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Contact Info -->
+        <h3 class="font-semibold text-slate-800 text-base leading-tight mb-3 flex items-center gap-2 flex-wrap">
+          <span>{{ contact.name }}</span>
+          {% now "Y-m-d" as today %}
+          {% if contact.created_at|date:"Y-m-d" == today %}
+          <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-gradient-to-r from-green-400 to-emerald-500 text-white shadow-sm animate-pulse">
+            ✨ NEW
+          </span>
+          {% endif %}
+        </h3>
+
+        <!-- Reminder Badge -->
+        {% if contact.has_reminder and contact.reminder_date %}
+        <div class="mb-3">
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+            <i class="ph-fill ph-bell text-xs"></i>
+            {{ contact.reminder_date|date:"M d, Y g:i A" }}
+          </span>
+        </div>
+        {% endif %}
+
+        <!-- Category Badge -->
+        {% if contact.category %}
+        <div class="mb-3">
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200">
+            <i class="ph ph-tag text-xs"></i>
+            {{ contact.category }}
+          </span>
+        </div>
+        {% endif %}
+
+        <div class="space-y-1.5">
+          {% if contact.phone %}
+          <div class="flex items-center gap-2 text-sm text-slate-600">
+            <i class="ph ph-phone text-slate-400 flex-shrink-0"></i>
+            <span class="truncate font-medium">{{ contact.phone }}</span>
+          </div>
+          {% endif %}
+          {% if contact.email %}
+          <div class="flex items-center gap-2 text-sm text-slate-600">
+            <i class="ph ph-envelope text-slate-400 flex-shrink-0"></i>
+            <span class="truncate">{{ contact.email }}</span>
+          </div>
+          {% endif %}
+          {% if contact.address %}
+          <div class="flex items-start gap-2 text-sm text-slate-600">
+            <i class="ph ph-map-pin text-slate-400 flex-shrink-0 mt-0.5"></i>
+            <span class="line-clamp-2">{{ contact.address }}</span>
+          </div>
+          {% endif %}
+          {% if contact.notes %}
+          <div class="flex items-start gap-2 text-sm text-slate-600 mt-2 pt-2 border-t border-slate-100">
+            <i class="ph ph-note text-slate-400 flex-shrink-0 mt-0.5"></i>
+            <span class="line-clamp-2 italic">{{ contact.notes }}</span>
+          </div>
+          {% endif %}
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="mt-4 pt-3 border-t border-red-100 flex gap-2">
+          <a href="tel:{{ contact.phone }}" 
+             class="flex-1 text-center py-2 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition-colors text-xs font-medium">
+            <i class="ph ph-phone"></i> Call
+          </a>
+          {% if contact.email %}
+          <a href="mailto:{{ contact.email }}" 
+             class="flex-1 text-center py-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors text-xs font-medium">
+            <i class="ph ph-envelope"></i> Email
+          </a>
+          {% endif %}
+          <a href="https://wa.me/{{ contact.phone|slice:'1:' }}" target="_blank"
+             class="flex-1 text-center py-2 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 transition-colors text-xs font-medium">
+            <i class="ph ph-whatsapp-logo"></i> WhatsApp
+          </a>
+        </div>
+        
+        <!-- Social Media Links -->
+        {% if contact.linkedin or contact.twitter or contact.facebook or contact.instagram %}
+        <div class="mt-3 pt-3 border-t border-red-100 flex items-center gap-2">
+          <span class="text-xs text-slate-500 font-medium">Social:</span>
+          {% if contact.linkedin %}
+          <a href="{{ contact.linkedin }}" target="_blank" 
+             class="w-7 h-7 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+             title="LinkedIn">
+            <i class="ph-fill ph-linkedin-logo text-sm"></i>
+          </a>
+          {% endif %}
+          {% if contact.twitter %}
+          <a href="https://twitter.com/{{ contact.twitter }}" target="_blank"
+             class="w-7 h-7 flex items-center justify-center rounded-lg bg-sky-50 text-sky-500 hover:bg-sky-100 transition-colors"
+             title="Twitter">
+            <i class="ph-fill ph-twitter-logo text-sm"></i>
+          </a>
+          {% endif %}
+          {% if contact.facebook %}
+          <a href="{{ contact.facebook }}" target="_blank"
+             class="w-7 h-7 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+             title="Facebook">
+            <i class="ph-fill ph-facebook-logo text-sm"></i>
+          </a>
+          {% endif %}
+          {% if contact.instagram %}
+          <a href="https://instagram.com/{{ contact.instagram }}" target="_blank"
+             class="w-7 h-7 flex items-center justify-center rounded-lg bg-pink-50 text-pink-600 hover:bg-pink-100 transition-colors"
+             title="Instagram">
+            <i class="ph-fill ph-instagram-logo text-sm"></i>
+          </a>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+  
+  <!-- Favorites Section -->
+  {% if favorites %}
+  <div class="mb-10">
+    <h2 class="font-serif text-xl text-slate-800 mb-4 flex items-center gap-2">
+      <i class="ph-fill ph-star text-yellow-500"></i> Favorites
+    </h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+      {% for contact in favorites %}
+      <div class="contact-card glass rounded-2xl p-5 shadow-md animate-fade-up border-2 border-yellow-200">
+
+        <!-- Avatar + Actions -->
+        <div class="flex items-start justify-between mb-4">
+          <div>
+            {% if contact.image %}
+              <img src="{{ contact.image.url }}" alt="{{ contact.name }}"
+                   class="w-14 h-14 rounded-2xl object-cover shadow-md" />
+            {% else %}
+              <!-- Colored initials avatar -->
+              <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-md"
+                   style="background: linear-gradient(135deg,
+                     hsl({{ contact.pk|add:200 }}, 60%, 45%),
+                     hsl({{ contact.pk|add:230 }}, 60%, 35%));">
+                {{ contact.get_initials }}
+              </div>
+            {% endif %}
+          </div>
+
+          <!-- Star / Edit / Delete buttons -->
+          <div class="flex gap-1.5">
+            <a href="{% url 'toggle_favorite' contact.pk %}"
+               class="w-8 h-8 flex items-center justify-center rounded-xl bg-yellow-100 hover:bg-yellow-200 text-yellow-600 transition-all hover:scale-110"
+               title="Remove from favorites">
+              <i class="ph-fill ph-star text-sm"></i>
+            </a>
+            <div class="relative group">
+              <button class="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-green-100 text-slate-500 hover:text-green-600 transition-all hover:scale-110"
+                      title="Download contact">
+                <i class="ph ph-download-simple text-sm"></i>
+              </button>
+              <!-- Download dropdown -->
+              <div class="absolute right-0 mt-1 w-40 bg-white rounded-xl shadow-lg border border-slate-200 hidden group-hover:block z-10">
+                <a href="{% url 'export_single_vcard' contact.pk %}" 
+                   class="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 text-sm text-slate-700 rounded-t-xl">
+                  <i class="ph ph-address-book text-green-600"></i>
+                  <span>vCard (.vcf)</span>
+                </a>
+                <a href="{% url 'export_single_csv' contact.pk %}"
+                   class="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 text-sm text-slate-700 rounded-b-xl">
+                  <i class="ph ph-file-csv text-blue-600"></i>
+                  <span>CSV (.csv)</span>
+                </a>
+              </div>
+            </div>
+            <a href="{% url 'edit_contact' contact.pk %}"
+               class="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-navy-100 text-slate-500 hover:text-navy-600 transition-all hover:scale-110"
+               style="--tw-bg-opacity:1;"
+               title="Edit">
+              <i class="ph ph-pencil-simple text-sm"></i>
+            </a>
+            <button onclick="confirmDelete('{{ contact.name }}', '{% url 'delete_contact' contact.pk %}')"
+                    class="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-red-100 text-slate-500 hover:text-red-500 transition-all hover:scale-110"
+                    title="Delete">
+              <i class="ph ph-trash text-sm"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Contact Info -->
+        <h3 class="font-semibold text-slate-800 text-base leading-tight mb-3 flex items-center gap-2 flex-wrap">
+          <span>{{ contact.name }}</span>
+          {% now "Y-m-d" as today %}
+          {% if contact.created_at|date:"Y-m-d" == today %}
+          <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-gradient-to-r from-green-400 to-emerald-500 text-white shadow-sm animate-pulse">
+            ✨ NEW
+          </span>
+          {% endif %}
+        </h3>
+
+        <!-- Reminder Badge -->
+        {% if contact.has_reminder and contact.reminder_date %}
+        <div class="mb-3">
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+            <i class="ph-fill ph-bell text-xs"></i>
+            {{ contact.reminder_date|date:"M d, Y g:i A" }}
+          </span>
+        </div>
+        {% endif %}
+
+        <!-- Category Badge -->
+        {% if contact.category %}
+        <div class="mb-3">
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-50 text-yellow-700 border border-yellow-200">
+            <i class="ph ph-tag text-xs"></i>
+            {{ contact.category }}
+          </span>
+        </div>
+        {% endif %}
+
+        <div class="space-y-1.5">
+          {% if contact.phone %}
+          <div class="flex items-center gap-2 text-sm text-slate-600">
+            <i class="ph ph-phone text-slate-400 flex-shrink-0"></i>
+            <span class="truncate">{{ contact.phone }}</span>
+          </div>
+          {% endif %}
+          {% if contact.email %}
+          <div class="flex items-center gap-2 text-sm text-slate-600">
+            <i class="ph ph-envelope text-slate-400 flex-shrink-0"></i>
+            <span class="truncate">{{ contact.email }}</span>
+          </div>
+          {% endif %}
+          {% if contact.address %}
+          <div class="flex items-start gap-2 text-sm text-slate-600">
+            <i class="ph ph-map-pin text-slate-400 flex-shrink-0 mt-0.5"></i>
+            <span class="line-clamp-2">{{ contact.address }}</span>
+          </div>
+          {% endif %}
+          {% if contact.notes %}
+          <div class="flex items-start gap-2 text-sm text-slate-600 mt-2 pt-2 border-t border-slate-100">
+            <i class="ph ph-note text-slate-400 flex-shrink-0 mt-0.5"></i>
+            <span class="line-clamp-2 italic">{{ contact.notes }}</span>
+          </div>
+          {% endif %}
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="mt-4 pt-3 border-t border-yellow-100 flex gap-2">
+          <a href="tel:{{ contact.phone }}" 
+             class="flex-1 text-center py-2 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition-colors text-xs font-medium">
+            <i class="ph ph-phone"></i> Call
+          </a>
+          {% if contact.email %}
+          <a href="mailto:{{ contact.email }}" 
+             class="flex-1 text-center py-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors text-xs font-medium">
+            <i class="ph ph-envelope"></i> Email
+          </a>
+          {% endif %}
+          <a href="https://wa.me/{{ contact.phone|slice:'1:' }}" target="_blank"
+             class="flex-1 text-center py-2 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 transition-colors text-xs font-medium">
+            <i class="ph ph-whatsapp-logo"></i> WhatsApp
+          </a>
+        </div>
+        
+        <!-- Social Media Links -->
+        {% if contact.linkedin or contact.twitter or contact.facebook or contact.instagram %}
+        <div class="mt-3 pt-3 border-t border-yellow-100 flex items-center gap-2">
+          <span class="text-xs text-slate-500 font-medium">Social:</span>
+          {% if contact.linkedin %}
+          <a href="{{ contact.linkedin }}" target="_blank" 
+             class="w-7 h-7 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+             title="LinkedIn">
+            <i class="ph-fill ph-linkedin-logo text-sm"></i>
+          </a>
+          {% endif %}
+          {% if contact.twitter %}
+          <a href="https://twitter.com/{{ contact.twitter }}" target="_blank"
+             class="w-7 h-7 flex items-center justify-center rounded-lg bg-sky-50 text-sky-500 hover:bg-sky-100 transition-colors"
+             title="Twitter">
+            <i class="ph-fill ph-twitter-logo text-sm"></i>
+          </a>
+          {% endif %}
+          {% if contact.facebook %}
+          <a href="{{ contact.facebook }}" target="_blank"
+             class="w-7 h-7 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+             title="Facebook">
+            <i class="ph-fill ph-facebook-logo text-sm"></i>
+          </a>
+          {% endif %}
+          {% if contact.instagram %}
+          <a href="https://instagram.com/{{ contact.instagram }}" target="_blank"
+             class="w-7 h-7 flex items-center justify-center rounded-lg bg-pink-50 text-pink-600 hover:bg-pink-100 transition-colors"
+             title="Instagram">
+            <i class="ph-fill ph-instagram-logo text-sm"></i>
+          </a>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Regular Contacts Section -->
+  {% if regular_contacts %}
+  <div>
+    {% if favorites %}
+    <h2 class="font-serif text-xl text-slate-800 mb-4">All Contacts</h2>
+    {% endif %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+      {% for contact in regular_contacts %}
+      <div class="contact-card glass rounded-2xl p-5 shadow-md animate-fade-up">
+
+        <!-- Avatar + Actions -->
+        <div class="flex items-start justify-between mb-4">
+          <div>
+            {% if contact.image %}
+              <img src="{{ contact.image.url }}" alt="{{ contact.name }}"
+                   class="w-14 h-14 rounded-2xl object-cover shadow-md" />
+            {% else %}
+              <!-- Colored initials avatar -->
+              <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-md"
+                   style="background: linear-gradient(135deg,
+                     hsl({{ contact.pk|add:200 }}, 60%, 45%),
+                     hsl({{ contact.pk|add:230 }}, 60%, 35%));">
+                {{ contact.get_initials }}
+              </div>
+            {% endif %}
+          </div>
+
+          <!-- Star / Edit / Delete buttons -->
+          <div class="flex gap-1.5">
+            <a href="{% url 'toggle_favorite' contact.pk %}"
+               class="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-yellow-100 text-slate-400 hover:text-yellow-500 transition-all hover:scale-110"
+               title="Add to favorites">
+              <i class="ph ph-star text-sm"></i>
+            </a>
+            <div class="relative group">
+              <button class="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-green-100 text-slate-500 hover:text-green-600 transition-all hover:scale-110"
+                      title="Download contact">
+                <i class="ph ph-download-simple text-sm"></i>
+              </button>
+              <!-- Download dropdown -->
+              <div class="absolute right-0 mt-1 w-40 bg-white rounded-xl shadow-lg border border-slate-200 hidden group-hover:block z-10">
+                <a href="{% url 'export_single_vcard' contact.pk %}" 
+                   class="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 text-sm text-slate-700 rounded-t-xl">
+                  <i class="ph ph-address-book text-green-600"></i>
+                  <span>vCard (.vcf)</span>
+                </a>
+                <a href="{% url 'export_single_csv' contact.pk %}"
+                   class="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 text-sm text-slate-700 rounded-b-xl">
+                  <i class="ph ph-file-csv text-blue-600"></i>
+                  <span>CSV (.csv)</span>
+                </a>
+              </div>
+            </div>
+            <a href="{% url 'edit_contact' contact.pk %}"
+               class="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-navy-100 text-slate-500 hover:text-navy-600 transition-all hover:scale-110"
+               style="--tw-bg-opacity:1;"
+               title="Edit">
+              <i class="ph ph-pencil-simple text-sm"></i>
+            </a>
+            <button onclick="confirmDelete('{{ contact.name }}', '{% url 'delete_contact' contact.pk %}')"
+                    class="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-red-100 text-slate-500 hover:text-red-500 transition-all hover:scale-110"
+                    title="Delete">
+              <i class="ph ph-trash text-sm"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Contact Info -->
+        <h3 class="font-semibold text-slate-800 text-base leading-tight mb-3 flex items-center gap-2 flex-wrap">
+          <span>{{ contact.name }}</span>
+          {% now "Y-m-d" as today %}
+          {% if contact.created_at|date:"Y-m-d" == today %}
+          <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-gradient-to-r from-green-400 to-emerald-500 text-white shadow-sm animate-pulse">
+            ✨ NEW
+          </span>
+          {% endif %}
+        </h3>
+
+        <!-- Reminder Badge -->
+        {% if contact.has_reminder and contact.reminder_date %}
+        <div class="mb-3">
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+            <i class="ph-fill ph-bell text-xs"></i>
+            {{ contact.reminder_date|date:"M d, Y g:i A" }}
+          </span>
+        </div>
+        {% endif %}
+
+        <!-- Category Badge -->
+        {% if contact.category %}
+        <div class="mb-3">
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-navy-100 text-navy-700">
+            <i class="ph ph-tag text-xs"></i>
+            {{ contact.category }}
+          </span>
+        </div>
+        {% endif %}
+
+        <div class="space-y-1.5">
+          {% if contact.phone %}
+          <div class="flex items-center gap-2 text-sm text-slate-600">
+            <i class="ph ph-phone text-slate-400 flex-shrink-0"></i>
+            <span class="truncate">{{ contact.phone }}</span>
+          </div>
+          {% endif %}
+          {% if contact.email %}
+          <div class="flex items-center gap-2 text-sm text-slate-600">
+            <i class="ph ph-envelope text-slate-400 flex-shrink-0"></i>
+            <span class="truncate">{{ contact.email }}</span>
+          </div>
+          {% endif %}
+          {% if contact.address %}
+          <div class="flex items-start gap-2 text-sm text-slate-600">
+            <i class="ph ph-map-pin text-slate-400 flex-shrink-0 mt-0.5"></i>
+            <span class="line-clamp-2">{{ contact.address }}</span>
+          </div>
+          {% endif %}
+          {% if contact.notes %}
+          <div class="flex items-start gap-2 text-sm text-slate-600 mt-2 pt-2 border-t border-slate-100">
+            <i class="ph ph-note text-slate-400 flex-shrink-0 mt-0.5"></i>
+            <span class="line-clamp-2 italic">{{ contact.notes }}</span>
+          </div>
+          {% endif %}
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="mt-4 pt-3 border-t border-slate-100 flex gap-2">
+          <a href="tel:{{ contact.phone }}" 
+             class="flex-1 text-center py-2 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition-colors text-xs font-medium">
+            <i class="ph ph-phone"></i> Call
+          </a>
+          {% if contact.email %}
+          <a href="mailto:{{ contact.email }}" 
+             class="flex-1 text-center py-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors text-xs font-medium">
+            <i class="ph ph-envelope"></i> Email
+          </a>
+          {% endif %}
+          <a href="https://wa.me/{{ contact.phone|slice:'1:' }}" target="_blank"
+             class="flex-1 text-center py-2 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 transition-colors text-xs font-medium">
+            <i class="ph ph-whatsapp-logo"></i> WhatsApp
+          </a>
+        </div>
+        
+        <!-- Social Media Links -->
+        {% if contact.linkedin or contact.twitter or contact.facebook or contact.instagram %}
+        <div class="mt-3 pt-3 border-t border-slate-100 flex items-center gap-2">
+          <span class="text-xs text-slate-500 font-medium">Social:</span>
+          {% if contact.linkedin %}
+          <a href="{{ contact.linkedin }}" target="_blank" 
+             class="w-7 h-7 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+             title="LinkedIn">
+            <i class="ph-fill ph-linkedin-logo text-sm"></i>
+          </a>
+          {% endif %}
+          {% if contact.twitter %}
+          <a href="https://twitter.com/{{ contact.twitter }}" target="_blank"
+             class="w-7 h-7 flex items-center justify-center rounded-lg bg-sky-50 text-sky-500 hover:bg-sky-100 transition-colors"
+             title="Twitter">
+            <i class="ph-fill ph-twitter-logo text-sm"></i>
+          </a>
+          {% endif %}
+          {% if contact.facebook %}
+          <a href="{{ contact.facebook }}" target="_blank"
+             class="w-7 h-7 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+             title="Facebook">
+            <i class="ph-fill ph-facebook-logo text-sm"></i>
+          </a>
+          {% endif %}
+          {% if contact.instagram %}
+          <a href="https://instagram.com/{{ contact.instagram }}" target="_blank"
+             class="w-7 h-7 flex items-center justify-center rounded-lg bg-pink-50 text-pink-600 hover:bg-pink-100 transition-colors"
+             title="Instagram">
+            <i class="ph-fill ph-instagram-logo text-sm"></i>
+          </a>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <!-- Empty State -->
+  <div class="flex flex-col items-center justify-center py-24 animate-fade-up text-center">
+    <div class="w-24 h-24 rounded-3xl flex items-center justify-center mb-6 shadow-lg"
+         style="background: linear-gradient(135deg, #f0f4ff, #e0eaff);">
+      {% if query %}
+        <i class="ph ph-magnifying-glass text-5xl" style="color:#3d5a99;"></i>
+      {% else %}
+        <img src="{% static 'images/logo.jpg' %}" alt="Contactify Logo" class="w-20 h-20 object-contain">
+      {% endif %}
+    </div>
+    {% if query %}
+      <h2 class="font-serif text-2xl text-slate-700 mb-2">No results found</h2>
+      <p class="text-slate-500 text-sm mb-6">No contacts match "<strong>{{ query }}</strong>"</p>
+      <a href="{% url 'dashboard' %}" class="btn-primary">
+        <i class="ph ph-arrow-left"></i> Clear Search
+      </a>
+    {% else %}
+      <h2 class="font-serif text-2xl text-slate-700 mb-2">Your directory is empty</h2>
+      <p class="text-slate-500 text-sm mb-6">Start building your contact directory by adding your first contact.</p>
+      <a href="{% url 'add_contact' %}" class="btn-primary">
+        <i class="ph ph-plus"></i> Add Your First Contact
+      </a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</main>
+
+<!-- Footer with Import/Export -->
+<footer class="glass border-t border-white/50 mt-12">
+  <div class="max-w-7xl mx-auto px-6 py-6">
+    <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+      <!-- Export Button -->
+      <a href="{% url 'export_contacts' %}" class="btn-secondary">
+        <i class="ph ph-download-simple"></i> Export CSV
+      </a>
+      <!-- Import Button -->
+      <button onclick="document.getElementById('importModal').classList.remove('hidden'); document.getElementById('importModal').classList.add('flex');" class="btn-secondary">
+        <i class="ph ph-upload-simple"></i> Import CSV
+      </button>
+      <!-- Delete All Button (only show if user has contacts) -->
+      {% if total > 0 %}
+      <button onclick="document.getElementById('deleteAllModal').classList.remove('hidden'); document.getElementById('deleteAllModal').classList.add('flex');" class="btn-secondary text-red-600 hover:bg-red-50 hover:border-red-300">
+        <i class="ph ph-trash"></i> Delete All
+      </button>
+      {% endif %}
+    </div>
+  </div>
+</footer>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4"
+     style="background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);">
+  <div class="glass rounded-3xl shadow-2xl p-8 max-w-sm w-full text-center animate-fade-up">
+    <div class="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+      <i class="ph ph-trash text-3xl text-red-500"></i>
+    </div>
+    <h3 class="font-serif text-xl text-slate-800 mb-2">Delete Contact?</h3>
+    <p class="text-slate-500 text-sm mb-6">
+      Are you sure you want to delete <strong id="contactName"></strong>? This cannot be undone.
+    </p>
+    <div class="flex gap-3">
+      <button onclick="closeModal()"
+              class="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-medium hover:bg-slate-50 transition-colors">
+        Cancel
+      </button>
+      <form id="deleteForm" method="post" class="flex-1">
+        {% csrf_token %}
+        <button type="submit"
+                class="w-full py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white font-medium transition-colors">
+          Delete
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Import CSV Modal -->
+<div id="importModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4"
+     style="background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);">
+  <div class="glass rounded-3xl shadow-2xl p-8 max-w-md w-full animate-fade-up">
+    <div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+      <i class="ph ph-upload-simple text-3xl text-blue-600"></i>
+    </div>
+    <h3 class="font-serif text-xl text-slate-800 mb-2 text-center">Import Contacts</h3>
+    <p class="text-slate-500 text-sm mb-6 text-center">
+      Upload a CSV file with columns: Name, Phone, Email, Address, Favorite
+    </p>
+    
+    <form method="post" action="{% url 'import_contacts' %}" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-slate-700 mb-2">Choose CSV File</label>
+        <input type="file" name="csv_file" accept=".csv" required
+               class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+      </div>
+      
+      <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+        <p class="text-xs text-blue-800 font-medium mb-2">CSV Format Example:</p>
+        <code class="text-xs text-blue-700 block">
+          Name,Phone,Email,Address,Favorite<br>
+          John Doe,0912345678,john@example.com,Addis Ababa,Yes
+        </code>
+      </div>
+      
+      <div class="flex gap-3">
+        <button type="button" onclick="closeImportModal()"
+                class="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-medium hover:bg-slate-50 transition-colors">
+          Cancel
+        </button>
+        <button type="submit"
+                class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors">
+          Import
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Delete All Contacts Modal -->
+<div id="deleteAllModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4"
+     style="background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);">
+  <div class="glass rounded-3xl shadow-2xl p-8 max-w-md w-full animate-fade-up">
+    <div class="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+      <i class="ph ph-warning text-3xl text-red-600"></i>
+    </div>
+    <h3 class="font-serif text-xl text-slate-800 mb-2 text-center">Delete All Contacts?</h3>
+    <p class="text-slate-500 text-sm mb-6 text-center">
+      This will permanently delete all <strong>{{ total }}</strong> contacts. This action cannot be undone.
+    </p>
+    
+    <form method="post" action="{% url 'delete_all_contacts' %}" id="deleteAllForm">
+      {% csrf_token %}
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-slate-700 mb-2">
+          Type <strong>DELETE ALL</strong> to confirm:
+        </label>
+        <input type="text" name="confirmation" id="deleteAllConfirmation"
+               placeholder="DELETE ALL"
+               class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+               oninput="toggleDeleteAllButton()">
+      </div>
+      
+      <div class="flex gap-3">
+        <button type="button" onclick="closeDeleteAllModal()"
+                class="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-medium hover:bg-slate-50 transition-colors">
+          Cancel
+        </button>
+        <button type="submit" id="deleteAllButton" disabled
+                class="flex-1 py-2.5 rounded-xl bg-red-500 text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-red-600 disabled:hover:bg-red-500">
+          Delete All
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function confirmDelete(name, url) {
+  document.getElementById('contactName').textContent = name;
+  document.getElementById('deleteForm').action = url;
+  const modal = document.getElementById('deleteModal');
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+}
+function closeModal() {
+  const modal = document.getElementById('deleteModal');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+}
+function closeImportModal() {
+  const modal = document.getElementById('importModal');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+}
+function closeDeleteAllModal() {
+  const modal = document.getElementById('deleteAllModal');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+  document.getElementById('deleteAllConfirmation').value = '';
+  document.getElementById('deleteAllButton').disabled = true;
+}
+function toggleDeleteAllButton() {
+  const input = document.getElementById('deleteAllConfirmation');
+  const button = document.getElementById('deleteAllButton');
+  button.disabled = input.value !== 'DELETE ALL';
+}
+// Close modals on backdrop click
+document.getElementById('deleteModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+document.getElementById('importModal').addEventListener('click', function(e) {
+  if (e.target === this) closeImportModal();
+});
+document.getElementById('deleteAllModal')?.addEventListener('click', function(e) {
+  if (e.target === this) closeDeleteAllModal();
+});
+
+// Refocus search input after search and allow Enter key
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput && '{{ query }}') {
+    searchInput.focus();
+    searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+  }
+});
+</script>
+
+{% endblock %}

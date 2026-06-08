@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+
+{% block title %}ContactVault - Your Personal Contact Manager{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex flex-col">
+  
+  <!-- Navigation -->
+  <nav class="px-6 py-4">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="ph-fill ph-address-book text-3xl text-navy-600"></i>
+        <span class="text-2xl font-serif font-bold text-navy-800">ContactVault</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <a href="{% url 'login' %}" class="btn-secondary">
+          <i class="ph ph-sign-in"></i>
+          Login
+        </a>
+        <a href="{% url 'signup' %}" class="btn-primary">
+          <i class="ph ph-user-plus"></i>
+          Sign Up
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <main class="flex-1 flex items-center justify-center px-6 py-12">
+    <div class="max-w-6xl mx-auto text-center">
+      
+      <!-- Main Heading -->
+      <div class="animate-fade-up mb-8">
+        <div class="inline-block px-4 py-2 bg-navy-50 rounded-full mb-4">
+          <span class="text-navy-700 font-semibold text-sm">✨ Free Forever • No Credit Card Required</span>
+        </div>
+        <h1 class="text-6xl md:text-7xl font-serif font-bold text-navy-800 mb-4">
+          Your Contacts,<br/>
+          <span class="text-navy-600">Beautifully Organized</span>
+        </h1>
+        <p class="text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
+          Store, manage, and access all your important contacts in one secure place. 
+          Simple, elegant, and always at your fingertips.
+        </p>
+      </div>
+
+      <!-- CTA Buttons -->
+      <div class="animate-fade-up flex items-center justify-center gap-4 mb-16" style="animation-delay: 0.1s;">
+        <a href="{% url 'signup' %}" class="btn-primary text-lg px-8 py-4">
+          <i class="ph ph-rocket-launch text-xl"></i>
+          Get Started Free
+        </a>
+        <a href="{% url 'login' %}" class="btn-secondary text-lg px-8 py-4">
+          <i class="ph ph-sign-in text-xl"></i>
+          Sign In
+        </a>
+      </div>
+
+      <!-- Feature Cards -->
+      <div class="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+        
+        <!-- Feature 1 -->
+        <div class="glass rounded-2xl p-8 animate-fade-up" style="animation-delay: 0.2s;">
+          <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-navy-500 to-navy-700 flex items-center justify-center mb-4 mx-auto">
+            <i class="ph-fill ph-lock text-2xl text-white"></i>
+          </div>
+          <h3 class="text-xl font-bold text-navy-800 mb-2">Secure & Private</h3>
+          <p class="text-slate-600">
+            Your contacts are encrypted and stored securely. Only you have access to your data.
+          </p>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="glass rounded-2xl p-8 animate-fade-up" style="animation-delay: 0.3s;">
+          <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-navy-500 to-navy-700 flex items-center justify-center mb-4 mx-auto">
+            <i class="ph-fill ph-magnifying-glass text-2xl text-white"></i>
+          </div>
+          <h3 class="text-xl font-bold text-navy-800 mb-2">Smart Search</h3>
+          <p class="text-slate-600">
+            Find any contact instantly with powerful search across names, emails, and phone numbers.
+          </p>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="glass rounded-2xl p-8 animate-fade-up" style="animation-delay: 0.4s;">
+          <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-navy-500 to-navy-700 flex items-center justify-center mb-4 mx-auto">
+            <i class="ph-fill ph-star text-2xl text-white"></i>
+          </div>
+          <h3 class="text-xl font-bold text-navy-800 mb-2">Favorites</h3>
+          <p class="text-slate-600">
+            Mark important contacts as favorites for quick access to the people who matter most.
+          </p>
+        </div>
+
+        <!-- Feature 4 -->
+        <div class="glass rounded-2xl p-8 animate-fade-up" style="animation-delay: 0.5s;">
+          <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-navy-500 to-navy-700 flex items-center justify-center mb-4 mx-auto">
+            <i class="ph-fill ph-image text-2xl text-white"></i>
+          </div>
+          <h3 class="text-xl font-bold text-navy-800 mb-2">Profile Photos</h3>
+          <p class="text-slate-600">
+            Add profile pictures to your contacts for easy visual recognition.
+          </p>
+        </div>
+
+        <!-- Feature 5 -->
+        <div class="glass rounded-2xl p-8 animate-fade-up" style="animation-delay: 0.6s;">
+          <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-navy-500 to-navy-700 flex items-center justify-center mb-4 mx-auto">
+            <i class="ph-fill ph-download text-2xl text-white"></i>
+          </div>
+          <h3 class="text-xl font-bold text-navy-800 mb-2">Import & Export</h3>
+          <p class="text-slate-600">
+            Easily import contacts from CSV files or export your entire contact list.
+          </p>
+        </div>
+
+        <!-- Feature 6 -->
+        <div class="glass rounded-2xl p-8 animate-fade-up" style="animation-delay: 0.7s;">
+          <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-navy-500 to-navy-700 flex items-center justify-center mb-4 mx-auto">
+            <i class="ph-fill ph-device-mobile text-2xl text-white"></i>
+          </div>
+          <h3 class="text-xl font-bold text-navy-800 mb-2">Responsive Design</h3>
+          <p class="text-slate-600">
+            Access your contacts from any device - desktop, tablet, or mobile.
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="px-6 py-8 text-center text-slate-500 text-sm">
+    <p>&copy; 2026 ContactVault. Built with Django & Tailwind CSS.</p>
+  </footer>
+
+</div>
+{% endblock %}
