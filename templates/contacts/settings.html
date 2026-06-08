@@ -48,6 +48,57 @@
 
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
     
+    <!-- Profile Picture Card -->
+    <div class="glass rounded-3xl shadow-xl p-6 animate-fade-up">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center"
+             style="background: linear-gradient(135deg, #ec4899, #d946ef);">
+          <i class="ph ph-camera text-white text-xl"></i>
+        </div>
+        <h2 class="font-serif text-xl text-slate-800">Profile Picture</h2>
+      </div>
+
+      <form method="post" action="{% url 'update_profile_picture' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="flex flex-col items-center mb-6">
+          <div id="profilePicturePreview" class="w-32 h-32 rounded-full mb-4 flex items-center justify-center text-white font-bold text-4xl shadow-lg overflow-hidden"
+               style="background: linear-gradient(135deg, #3d5a99, #2d4a89);">
+            {% if user.profile.profile_picture %}
+              <img src="{{ user.profile.profile_picture.url }}" class="w-full h-full object-cover" id="profileImg" />
+            {% else %}
+              <span id="initialsSpan">{{ user.profile.get_initials }}</span>
+            {% endif %}
+          </div>
+          
+          <label for="profilePictureInput" 
+                 class="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-slate-300 text-slate-600 text-sm font-medium hover:border-pink-500 hover:text-pink-600 transition-colors">
+            <i class="ph ph-upload-simple"></i>
+            {% if user.profile.profile_picture %}Change Photo{% else %}Upload Photo{% endif %}
+          </label>
+          <input type="file" name="profile_picture" id="profilePictureInput" accept="image/*" class="hidden" onchange="previewProfilePicture(this)" />
+          <p class="text-xs text-slate-400 mt-2">JPG, PNG, GIF up to 5MB</p>
+        </div>
+
+        <button type="submit" class="btn-primary w-full justify-center bg-pink-600 hover:bg-pink-700">
+          <i class="ph ph-floppy-disk"></i> Save Picture
+        </button>
+        
+        {% if user.profile.profile_picture %}
+        <button type="button" onclick="document.getElementById('removePhotoForm').submit();"
+                class="mt-2 w-full py-2 rounded-xl border border-red-300 text-red-600 text-sm font-medium hover:bg-red-50 transition-colors">
+          <i class="ph ph-trash"></i> Remove Picture
+        </button>
+        {% endif %}
+      </form>
+      
+      {% if user.profile.profile_picture %}
+      <form id="removePhotoForm" method="post" action="{% url 'remove_profile_picture' %}" class="hidden">
+        {% csrf_token %}
+      </form>
+      {% endif %}
+    </div>
+    
     <!-- Profile Information Card -->
     <div class="glass rounded-3xl shadow-xl p-6 animate-fade-up" style="animation-delay:0.1s;">
       <div class="flex items-center gap-3 mb-6">
@@ -93,6 +144,26 @@
                  class="form-input" />
         </div>
 
+        <div class="mb-4">
+          <label class="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide">Phone</label>
+          <input type="text" name="phone" value="{{ user.profile.phone }}"
+                 placeholder="Optional"
+                 class="form-input" />
+        </div>
+
+        <div class="mb-4">
+          <label class="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide">Location</label>
+          <input type="text" name="location" value="{{ user.profile.location }}"
+                 placeholder="City, Country (optional)"
+                 class="form-input" />
+        </div>
+
+        <div class="mb-6">
+          <label class="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide">Bio</label>
+          <textarea name="bio" rows="3" placeholder="Tell us about yourself... (optional)"
+                    class="form-input resize-none">{{ user.profile.bio }}</textarea>
+        </div>
+
         <button type="submit" class="btn-primary w-full justify-center">
           <i class="ph ph-floppy-disk"></i> Update Profile
         </button>
@@ -100,7 +171,7 @@
     </div>
 
     <!-- Change Password Card -->
-    <div class="glass rounded-3xl shadow-xl p-6 animate-fade-up" style="animation-delay:0.2s;">
+    <div class="glass rounded-3xl shadow-xl p-6 animate-fade-up" style="animation-delay:0.3s;">
       <div class="flex items-center gap-3 mb-6">
         <div class="w-12 h-12 rounded-xl flex items-center justify-center"
              style="background: linear-gradient(135deg, #f59e0b, #d97706);">
@@ -248,5 +319,20 @@
     </div>
   </div>
 </div>
+
+<script>
+function previewProfilePicture(input) {
+  const preview = document.getElementById('profilePicturePreview');
+  const initialsSpan = document.getElementById('initialsSpan');
+  
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      preview.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover" />`;
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+</script>
 
 {% endblock %}

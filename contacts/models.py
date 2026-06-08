@@ -66,3 +66,7 @@ class Contact(models.Model):
         if len(parts) >= 2:
             return parts[0][0].upper() + parts[-1][0].upper()
         return self.name[0].upper() if self.name else '?'
+
+
+# Import UserProfile model
+from .profile_models import UserProfile

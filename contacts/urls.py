@@ -41,6 +41,8 @@ urlpatterns = [
     # Settings routes
     path('settings/',               views.settings_view, name='settings'),
     path('settings/profile/',       views.update_profile, name='update_profile'),
+    path('settings/picture/',       views.update_profile_picture, name='update_profile_picture'),
+    path('settings/picture/remove/', views.remove_profile_picture, name='remove_profile_picture'),
     path('settings/password/',      views.change_password, name='change_password'),
     path('settings/delete/',        views.delete_account, name='delete_account'),
     

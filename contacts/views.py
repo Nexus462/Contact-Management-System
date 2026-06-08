@@ -779,6 +779,9 @@ def update_profile(request):
         email = request.POST.get('email', '').strip()
         first_name = request.POST.get('first_name', '').strip()
         last_name = request.POST.get('last_name', '').strip()
+        phone = request.POST.get('phone', '').strip()
+        location = request.POST.get('location', '').strip()
+        bio = request.POST.get('bio', '').strip()
         
         errors = {}
         
@@ -817,9 +820,41 @@ def update_profile(request):
         user.last_name = last_name
         user.save()
         
+        # Update profile
+        profile = user.profile
+        profile.phone = phone
+        profile.location = location
+        profile.bio = bio
+        profile.save()
+        
         messages.success(request, '✅ Profile updated successfully!')
         return redirect('settings')
     
+    return redirect('settings')
+
+
+@login_required
+def update_profile_picture(request):
+    """Update user profile picture."""
+    if request.method == 'POST' and request.FILES.get('profile_picture'):
+        user = request.user
+        profile = user.profile
+        profile.profile_picture = request.FILES['profile_picture']
+        profile.save()
+        messages.success(request, '✅ Profile picture updated!')
+    return redirect('settings')
+
+
+@login_required
+def remove_profile_picture(request):
+    """Remove user profile picture."""
+    if request.method == 'POST':
+        user = request.user
+        profile = user.profile
+        if profile.profile_picture:
+            profile.profile_picture.delete()
+            profile.save()
+            messages.success(request, '✅ Profile picture removed!')
     return redirect('settings')
 
 
