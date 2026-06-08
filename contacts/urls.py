@@ -38,6 +38,12 @@ urlpatterns = [
     # Statistics route
     path('stats/',                  views.stats_view, name='stats'),
     
+    # Settings routes
+    path('settings/',               views.settings_view, name='settings'),
+    path('settings/profile/',       views.update_profile, name='update_profile'),
+    path('settings/password/',      views.change_password, name='change_password'),
+    path('settings/delete/',        views.delete_account, name='delete_account'),
+    
     # Import/Export routes
     path('export/',                 views.export_contacts,  name='export_contacts'),
     path('import/',                 views.import_contacts,  name='import_contacts'),

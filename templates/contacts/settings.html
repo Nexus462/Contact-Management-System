@@ -1,0 +1,252 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Account Settings — Contactify{% endblock %}
+
+{% block content %}
+
+<!-- Top Navbar -->
+<nav class="glass sticky top-0 z-40 border-b border-white/50 shadow-sm">
+  <div class="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="flex items-center justify-center w-9 h-9 rounded-xl shadow overflow-hidden"
+           style="background: white;">
+        <img src="{% static 'images/logo.jpg' %}" alt="Contactify Logo" class="w-full h-full object-cover">
+      </div>
+      <span class="font-serif text-xl text-slate-800">Contactify</span>
+    </div>
+    <a href="{% url 'dashboard' %}"
+       class="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors font-medium">
+      <i class="ph ph-arrow-left"></i> Back to Dashboard
+    </a>
+  </div>
+</nav>
+
+<!-- Main Content -->
+<main class="max-w-4xl mx-auto px-6 py-10">
+
+  <!-- Page Header -->
+  <div class="mb-8 text-center animate-fade-up">
+    <div class="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg mx-auto mb-4"
+         style="background: linear-gradient(135deg, #3d5a99, #2d4a89);">
+      <i class="ph ph-gear text-white text-3xl"></i>
+    </div>
+    <h1 class="font-serif text-3xl text-slate-800 mb-2">Account Settings</h1>
+    <p class="text-slate-500">Manage your profile and account preferences</p>
+  </div>
+
+  <!-- Success Messages -->
+  {% if messages %}
+    {% for message in messages %}
+    <div class="mb-6 p-4 rounded-xl {% if message.tags == 'success' %}bg-green-50 border-2 border-green-200{% else %}bg-blue-50 border-2 border-blue-200{% endif %} animate-fade-up">
+      <div class="flex items-center gap-3">
+        <i class="ph-fill ph-check-circle text-green-600 text-2xl"></i>
+        <p class="text-green-800 font-medium">{{ message }}</p>
+      </div>
+    </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    
+    <!-- Profile Information Card -->
+    <div class="glass rounded-3xl shadow-xl p-6 animate-fade-up" style="animation-delay:0.1s;">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center"
+             style="background: linear-gradient(135deg, #3d5a99, #2d4a89);">
+          <i class="ph ph-user text-white text-xl"></i>
+        </div>
+        <h2 class="font-serif text-xl text-slate-800">Profile Information</h2>
+      </div>
+
+      <form method="post" action="{% url 'update_profile' %}">
+        {% csrf_token %}
+        
+        <div class="mb-4">
+          <label class="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide">Username</label>
+          <input type="text" name="username" value="{{ user.username }}" required
+                 class="form-input {% if profile_errors.username %}border-red-500 border-2 bg-red-50{% endif %}" />
+          {% if profile_errors.username %}
+            <p class="text-red-600 text-xs mt-1">{{ profile_errors.username }}</p>
+          {% endif %}
+        </div>
+
+        <div class="mb-4">
+          <label class="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide">Email</label>
+          <input type="email" name="email" value="{{ user.email }}" required
+                 class="form-input {% if profile_errors.email %}border-red-500 border-2 bg-red-50{% endif %}" />
+          {% if profile_errors.email %}
+            <p class="text-red-600 text-xs mt-1">{{ profile_errors.email }}</p>
+          {% endif %}
+        </div>
+
+        <div class="mb-4">
+          <label class="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide">First Name</label>
+          <input type="text" name="first_name" value="{{ user.first_name }}"
+                 placeholder="Optional"
+                 class="form-input" />
+        </div>
+
+        <div class="mb-6">
+          <label class="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide">Last Name</label>
+          <input type="text" name="last_name" value="{{ user.last_name }}"
+                 placeholder="Optional"
+                 class="form-input" />
+        </div>
+
+        <button type="submit" class="btn-primary w-full justify-center">
+          <i class="ph ph-floppy-disk"></i> Update Profile
+        </button>
+      </form>
+    </div>
+
+    <!-- Change Password Card -->
+    <div class="glass rounded-3xl shadow-xl p-6 animate-fade-up" style="animation-delay:0.2s;">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center"
+             style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+          <i class="ph ph-lock text-white text-xl"></i>
+        </div>
+        <h2 class="font-serif text-xl text-slate-800">Change Password</h2>
+      </div>
+
+      <form method="post" action="{% url 'change_password' %}">
+        {% csrf_token %}
+        
+        <div class="mb-4">
+          <label class="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide">Current Password</label>
+          <input type="password" name="old_password" required
+                 class="form-input {% if password_errors.old_password %}border-red-500 border-2 bg-red-50{% endif %}" />
+          {% if password_errors.old_password %}
+            <p class="text-red-600 text-xs mt-1">{{ password_errors.old_password }}</p>
+          {% endif %}
+        </div>
+
+        <div class="mb-4">
+          <label class="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide">New Password</label>
+          <input type="password" name="new_password1" required
+                 class="form-input {% if password_errors.new_password1 %}border-red-500 border-2 bg-red-50{% endif %}" />
+          {% if password_errors.new_password1 %}
+            <p class="text-red-600 text-xs mt-1">{{ password_errors.new_password1 }}</p>
+          {% endif %}
+        </div>
+
+        <div class="mb-6">
+          <label class="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide">Confirm New Password</label>
+          <input type="password" name="new_password2" required
+                 class="form-input {% if password_errors.new_password2 %}border-red-500 border-2 bg-red-50{% endif %}" />
+          {% if password_errors.new_password2 %}
+            <p class="text-red-600 text-xs mt-1">{{ password_errors.new_password2 }}</p>
+          {% endif %}
+        </div>
+
+        <button type="submit" class="btn-primary w-full justify-center bg-amber-600 hover:bg-amber-700">
+          <i class="ph ph-key"></i> Change Password
+        </button>
+      </form>
+    </div>
+
+    <!-- Account Statistics -->
+    <div class="glass rounded-3xl shadow-xl p-6 animate-fade-up" style="animation-delay:0.3s;">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center"
+             style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+          <i class="ph ph-chart-bar text-white text-xl"></i>
+        </div>
+        <h2 class="font-serif text-xl text-slate-800">Account Statistics</h2>
+      </div>
+
+      <div class="space-y-4">
+        <div class="flex items-center justify-between p-3 rounded-xl bg-white/50">
+          <div class="flex items-center gap-2">
+            <i class="ph ph-users text-purple-600"></i>
+            <span class="text-sm text-slate-700">Total Contacts</span>
+          </div>
+          <span class="font-bold text-slate-800">{{ total_contacts }}</span>
+        </div>
+
+        <div class="flex items-center justify-between p-3 rounded-xl bg-white/50">
+          <div class="flex items-center gap-2">
+            <i class="ph-fill ph-star text-yellow-500"></i>
+            <span class="text-sm text-slate-700">Favorites</span>
+          </div>
+          <span class="font-bold text-slate-800">{{ favorites_count }}</span>
+        </div>
+
+        <div class="flex items-center justify-between p-3 rounded-xl bg-white/50">
+          <div class="flex items-center gap-2">
+            <i class="ph-fill ph-siren text-red-500"></i>
+            <span class="text-sm text-slate-700">Emergency</span>
+          </div>
+          <span class="font-bold text-slate-800">{{ emergency_count }}</span>
+        </div>
+
+        <div class="flex items-center justify-between p-3 rounded-xl bg-white/50">
+          <div class="flex items-center gap-2">
+            <i class="ph-fill ph-bell text-blue-500"></i>
+            <span class="text-sm text-slate-700">Reminders</span>
+          </div>
+          <span class="font-bold text-slate-800">{{ reminders_count }}</span>
+        </div>
+
+        <div class="flex items-center justify-between p-3 rounded-xl bg-white/50">
+          <div class="flex items-center gap-2">
+            <i class="ph ph-calendar text-green-600"></i>
+            <span class="text-sm text-slate-700">Member Since</span>
+          </div>
+          <span class="font-bold text-slate-800">{{ user.date_joined|date:"M Y" }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Danger Zone -->
+    <div class="glass rounded-3xl shadow-xl p-6 border-2 border-red-200 animate-fade-up" style="animation-delay:0.4s;">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center bg-red-100">
+          <i class="ph ph-warning text-red-600 text-xl"></i>
+        </div>
+        <h2 class="font-serif text-xl text-red-800">Danger Zone</h2>
+      </div>
+
+      <p class="text-sm text-slate-600 mb-4">
+        These actions are permanent and cannot be undone. Please be careful.
+      </p>
+
+      <button onclick="document.getElementById('deleteAccountModal').classList.remove('hidden'); document.getElementById('deleteAccountModal').classList.add('flex');"
+              class="w-full py-3 rounded-xl border-2 border-red-300 text-red-600 font-medium hover:bg-red-50 transition-colors">
+        <i class="ph ph-trash"></i> Delete Account
+      </button>
+    </div>
+
+  </div>
+
+</main>
+
+<!-- Delete Account Modal -->
+<div id="deleteAccountModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4"
+     style="background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);">
+  <div class="glass rounded-3xl shadow-2xl p-8 max-w-md w-full text-center animate-fade-up">
+    <div class="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+      <i class="ph ph-warning text-3xl text-red-500"></i>
+    </div>
+    <h3 class="font-serif text-2xl text-slate-800 mb-2">Delete Account?</h3>
+    <p class="text-slate-600 text-sm mb-6">
+      This will permanently delete your account and <strong>all {{ total_contacts }} contacts</strong>. 
+      This action cannot be undone!
+    </p>
+    <div class="flex gap-3">
+      <button onclick="document.getElementById('deleteAccountModal').classList.add('hidden'); document.getElementById('deleteAccountModal').classList.remove('flex');"
+              class="flex-1 py-3 rounded-xl border border-slate-200 text-slate-600 font-medium hover:bg-slate-50 transition-colors">
+        Cancel
+      </button>
+      <form method="post" action="{% url 'delete_account' %}" class="flex-1">
+        {% csrf_token %}
+        <button type="submit"
+                class="w-full py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-medium transition-colors">
+          Delete Forever
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

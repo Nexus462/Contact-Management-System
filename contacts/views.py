@@ -6,6 +6,7 @@ Each view handles one specific page/action.
 import csv
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
@@ -744,3 +745,148 @@ def stats_view(request):
             'categories': categories,
         }
     })
+
+
+# ─── SETTINGS VIEWS ────────────────────────────────────────────────────────────
+
+@login_required
+def settings_view(request):
+    """Display account settings page."""
+    user = request.user
+    
+    # Get statistics
+    total_contacts = Contact.objects.filter(user=user).count()
+    favorites_count = Contact.objects.filter(user=user, is_favorite=True).count()
+    emergency_count = Contact.objects.filter(user=user, is_emergency=True).count()
+    reminders_count = Contact.objects.filter(user=user, has_reminder=True).count()
+    
+    context = {
+        'total_contacts': total_contacts,
+        'favorites_count': favorites_count,
+        'emergency_count': emergency_count,
+        'reminders_count': reminders_count,
+    }
+    
+    return render(request, 'contacts/settings.html', context)
+
+
+@login_required
+def update_profile(request):
+    """Update user profile information."""
+    if request.method == 'POST':
+        user = request.user
+        username = request.POST.get('username', '').strip()
+        email = request.POST.get('email', '').strip()
+        first_name = request.POST.get('first_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
+        
+        errors = {}
+        
+        # Validate username
+        if not username:
+            errors['username'] = 'Username is required.'
+        elif username != user.username and User.objects.filter(username=username).exists():
+            errors['username'] = 'This username is already taken.'
+        
+        # Validate email
+        if not email:
+            errors['email'] = 'Email is required.'
+        elif email != user.email and User.objects.filter(email=email).exists():
+            errors['email'] = 'This email is already in use.'
+        
+        if errors:
+            # Re-render with errors
+            total_contacts = Contact.objects.filter(user=user).count()
+            favorites_count = Contact.objects.filter(user=user, is_favorite=True).count()
+            emergency_count = Contact.objects.filter(user=user, is_emergency=True).count()
+            reminders_count = Contact.objects.filter(user=user, has_reminder=True).count()
+            
+            context = {
+                'profile_errors': errors,
+                'total_contacts': total_contacts,
+                'favorites_count': favorites_count,
+                'emergency_count': emergency_count,
+                'reminders_count': reminders_count,
+            }
+            return render(request, 'contacts/settings.html', context)
+        
+        # Update user
+        user.username = username
+        user.email = email
+        user.first_name = first_name
+        user.last_name = last_name
+        user.save()
+        
+        messages.success(request, '✅ Profile updated successfully!')
+        return redirect('settings')
+    
+    return redirect('settings')
+
+
+@login_required
+def change_password(request):
+    """Change user password."""
+    if request.method == 'POST':
+        user = request.user
+        old_password = request.POST.get('old_password', '')
+        new_password1 = request.POST.get('new_password1', '')
+        new_password2 = request.POST.get('new_password2', '')
+        
+        errors = {}
+        
+        # Check old password
+        if not user.check_password(old_password):
+            errors['old_password'] = 'Current password is incorrect.'
+        
+        # Validate new password
+        if not new_password1:
+            errors['new_password1'] = 'New password is required.'
+        elif len(new_password1) < 8:
+            errors['new_password1'] = 'Password must be at least 8 characters.'
+        
+        # Check passwords match
+        if new_password1 != new_password2:
+            errors['new_password2'] = 'Passwords do not match.'
+        
+        if errors:
+            # Re-render with errors
+            total_contacts = Contact.objects.filter(user=user).count()
+            favorites_count = Contact.objects.filter(user=user, is_favorite=True).count()
+            emergency_count = Contact.objects.filter(user=user, is_emergency=True).count()
+            reminders_count = Contact.objects.filter(user=user, has_reminder=True).count()
+            
+            context = {
+                'password_errors': errors,
+                'total_contacts': total_contacts,
+                'favorites_count': favorites_count,
+                'emergency_count': emergency_count,
+                'reminders_count': reminders_count,
+            }
+            return render(request, 'contacts/settings.html', context)
+        
+        # Change password
+        user.set_password(new_password1)
+        user.save()
+        
+        # Re-login user with new password
+        login(request, user)
+        
+        messages.success(request, '✅ Password changed successfully!')
+        return redirect('settings')
+    
+    return redirect('settings')
+
+
+@login_required
+def delete_account(request):
+    """Delete user account and all contacts."""
+    if request.method == 'POST':
+        user = request.user
+        # Delete all contacts first
+        Contact.objects.filter(user=user).delete()
+        # Delete user account
+        user.delete()
+        messages.success(request, 'Your account has been deleted.')
+        return redirect('home')
+    
+    return redirect('settings')
