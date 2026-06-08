@@ -754,6 +754,11 @@ def settings_view(request):
     """Display account settings page."""
     user = request.user
     
+    # Ensure user has a profile
+    from .profile_models import UserProfile
+    if not hasattr(user, 'profile'):
+        UserProfile.objects.create(user=user)
+    
     # Get statistics
     total_contacts = Contact.objects.filter(user=user).count()
     favorites_count = Contact.objects.filter(user=user, is_favorite=True).count()
@@ -775,6 +780,12 @@ def update_profile(request):
     """Update user profile information."""
     if request.method == 'POST':
         user = request.user
+        
+        # Ensure user has a profile
+        from .profile_models import UserProfile
+        if not hasattr(user, 'profile'):
+            UserProfile.objects.create(user=user)
+        
         username = request.POST.get('username', '').strip()
         email = request.POST.get('email', '').strip()
         first_name = request.POST.get('first_name', '').strip()
@@ -838,6 +849,12 @@ def update_profile_picture(request):
     """Update user profile picture."""
     if request.method == 'POST' and request.FILES.get('profile_picture'):
         user = request.user
+        
+        # Ensure user has a profile
+        from .profile_models import UserProfile
+        if not hasattr(user, 'profile'):
+            UserProfile.objects.create(user=user)
+        
         profile = user.profile
         profile.profile_picture = request.FILES['profile_picture']
         profile.save()
@@ -850,6 +867,12 @@ def remove_profile_picture(request):
     """Remove user profile picture."""
     if request.method == 'POST':
         user = request.user
+        
+        # Ensure user has a profile
+        from .profile_models import UserProfile
+        if not hasattr(user, 'profile'):
+            UserProfile.objects.create(user=user)
+        
         profile = user.profile
         if profile.profile_picture:
             profile.profile_picture.delete()
